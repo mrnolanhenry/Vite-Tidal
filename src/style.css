@@ -1,6 +1,6 @@
 :root { font-family: system-ui, sans-serif; color-scheme: dark; }
 body { margin: 0; background: #0b0b0f; color: #eee; }
-#root { max-width: 640px; margin: 0 auto; padding: 2rem 1rem; }
+#root { max-width: 960px; margin: 0 auto; padding: 2rem 1rem; }
 header { display: flex; justify-content: space-between; align-items: center; }
 form { display: flex; gap: .5rem; margin: 1rem 0; }
 input { flex: 1; padding: .6rem; border-radius: 6px; border: 1px solid #333; background: #16161d; color: inherit; }
@@ -12,3 +12,31 @@ li { display: flex; justify-content: space-between; padding: .6rem .2rem; border
 small { color: #888; }
 em { font-size: .7em; border: 1px solid #888; padding: 0 .25em; border-radius: 3px; }
 .error { color: #ff6b6b; white-space: pre-wrap; }
+
+a { color: #00d4ff; }
+nav { display: flex; gap: 1rem; margin: 1rem 0; }
+
+/* Library tree */
+.tree, .tree ul { list-style: none; margin: 0; padding: 0; }
+.tree li { display: block; padding: 0; border-bottom: 0; }
+.nested { margin-left: 1.5rem; padding-left: .5rem; border-left: 1px solid #222; }
+.row { display: flex; align-items: center; gap: .75rem; width: 100%; box-sizing: border-box; padding: .4rem .5rem; border-radius: 6px; color: inherit; text-decoration: none; }
+button.row { background: transparent; font: inherit; font-weight: 500; text-align: left; }
+.row:hover { background: #16161d; }
+.row-title { flex: 1; }
+.empty { color: #888; margin: .25rem 0 .5rem 3.5rem; }
+
+/* Artwork */
+.art { border-radius: 4px; object-fit: cover; flex-shrink: 0; background: #16161d; }
+.art-empty { display: flex; align-items: center; justify-content: center; color: #666; }
+
+/* Playlist page */
+.playlist-header { display: flex; gap: 1.25rem; align-items: flex-end; margin: 1rem 0 1.5rem; }
+.playlist-header h2 { margin: 0 0 .5rem; }
+.description { color: #aaa; margin: 0; max-width: 60ch; }
+.table-wrap { overflow-x: auto; }
+table.tracks { width: 100%; border-collapse: collapse; }
+.tracks th, .tracks td { padding: .4rem .6rem; text-align: left; border-bottom: 1px solid #222; vertical-align: middle; }
+.tracks th button { background: none; color: #aaa; padding: 0; border-radius: 0; font-weight: 600; }
+.tracks th button:hover { color: #fff; }
+.tracks .num { text-align: right; color: #888; font-variant-numeric: tabular-nums; }

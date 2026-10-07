@@ -2,10 +2,79 @@ import { getToken } from "./auth";
 
 const BASE = "https://openapi.tidal.com/v2";
 
-interface ResourceIdentifier {
-  id: string;
-  type: string;
+/* ---------- politeness: throttle, retry on 429, short-lived cache ---------- */
+
+const MIN_GAP_MS = 250; // at most ~4 requests per second
+const MAX_RETRIES = 5;
+const CACHE_MS = 5 * 60 * 1000;
+
+let nextSlot = 0;
+const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+/** Spaces out request start times. A 429 pushes nextSlot forward, pausing everyone. */
+async function throttle() {
+  const now = Date.now();
+  const start = Math.max(now, nextSlot);
+  nextSlot = start + MIN_GAP_MS;
+  if (start > now) await sleep(start - now);
 }
+
+export class ApiError extends Error {
+  status: number;
+  constructor(status: number, message: string) {
+    super(message);
+    this.status = status;
+  }
+}
+
+async function fetchWithRetry<T>(url: string): Promise<T> {
+  for (let attempt = 0; ; attempt++) {
+    await throttle();
+    const res = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${getToken()}`,
+        accept: "application/vnd.api+json",
+      },
+    });
+
+    if (res.status === 429 && attempt < MAX_RETRIES) {
+      // Retry-After may be hidden from browsers by CORS, so fall back to backoff.
+      const header = Number(res.headers.get("Retry-After"));
+      const base = header > 0 ? header * 1000 : 1000 * 2 ** attempt;
+      const delay = Math.min(base, 30_000) + Math.random() * 250;
+      nextSlot = Math.max(nextSlot, Date.now() + delay);
+      continue;
+    }
+
+    if (!res.ok) {
+      const body = await res.text();
+      const hint = res.status === 429 ? " (rate limited by TIDAL; wait a minute and retry)" : "";
+      throw new ApiError(
+        res.status,
+        `${res.status} ${res.statusText}${body ? `: ${body}` : hint}`,
+      );
+    }
+    return (await res.json()) as T;
+  }
+}
+
+const cache = new Map<string, { expires: number; promise: Promise<unknown> }>();
+
+export function request<T>(path: string, params: Record<string, string> = {}): Promise<T> {
+  const url = new URL(BASE + path);
+  Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
+  const key = url.toString();
+
+  const hit = cache.get(key);
+  if (hit && hit.expires > Date.now()) return hit.promise as Promise<T>;
+
+  const promise = fetchWithRetry<T>(key);
+  cache.set(key, { expires: Date.now() + CACHE_MS, promise });
+  promise.catch(() => cache.delete(key)); // never cache failures
+  return promise;
+}
+
+/* ---------- search ---------- */
 
 interface TrackAttributes {
   title?: string;
@@ -17,11 +86,10 @@ interface JsonApiResource {
   id: string;
   type: string;
   attributes?: TrackAttributes;
-  relationships?: Record<string, { data?: ResourceIdentifier[] }>;
+  relationships?: Record<string, { data?: { id: string; type: string }[] }>;
 }
 
 interface JsonApiDoc {
-  // TIDAL now returns an array here; older responses returned a single object.
   data: JsonApiResource | JsonApiResource[];
   included?: JsonApiResource[];
 }
@@ -31,20 +99,6 @@ export interface Track {
   title: string;
   duration?: string;
   explicit?: boolean;
-}
-
-async function request<T>(path: string, params: Record<string, string> = {}) {
-  const url = new URL(BASE + path);
-  Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
-
-  const res = await fetch(url, {
-    headers: {
-      Authorization: `Bearer ${getToken()}`,
-      accept: "application/vnd.api+json",
-    },
-  });
-  if (!res.ok) throw new Error(`${res.status} ${res.statusText}: ${await res.text()}`);
-  return (await res.json()) as T;
 }
 
 export async function searchTracks(query: string, countryCode = "US"): Promise<Track[]> {
@@ -57,13 +111,9 @@ export async function searchTracks(query: string, countryCode = "US"): Promise<T
   const primary = Array.isArray(doc.data) ? doc.data[0] : doc.data;
   if (!primary) return [];
 
-  const included = doc.included ?? [];
   const byId = new Map(
-    included.filter((r) => r.type === "tracks").map((r) => [r.id, r] as const),
+    (doc.included ?? []).filter((r) => r.type === "tracks").map((r) => [r.id, r] as const),
   );
-
-  // Prefer the relationship order (TIDAL's relevance ranking); fall back to
-  // whatever tracks were included if the relationship carries no data.
   const orderedIds = primary.relationships?.tracks?.data?.map((r) => r.id);
   const resources = orderedIds
     ? orderedIds.flatMap((id) => byId.get(id) ?? [])

@@ -76,6 +76,6 @@ export async function handleRedirect(): Promise<void> {
 export const getToken = () => sessionStorage.getItem("access_token");
 
 export function logout() {
-  sessionStorage.removeItem("access_token");
+  sessionStorage.clear();
   window.location.reload();
 }
