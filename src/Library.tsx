@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import Artwork from "./Artwork";
-import { fetchCoverArt, getLibrary, type PlaylistEntry } from "./playlists";
+import { fetchCoverArt, getLibrary, type PlaylistEntry } from "./services/playlists";
 
 export default function Library() {
   const [playlists, setPlaylists] = useState<PlaylistEntry[] | null>(null);

@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { formatDuration, searchTracks, type Track } from "./api";
+import { formatDuration, searchTracks, type Track } from "./services/api";
 
 export default function Search() {
   const [query, setQuery] = useState("");

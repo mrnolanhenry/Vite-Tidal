@@ -7,7 +7,7 @@ import {
   getPlaylistTracks,
   type PlaylistDetail,
   type PlaylistTrack,
-} from "./playlists";
+} from "./services/playlists";
 
 type SortKey = "position" | "title" | "artist" | "year" | "duration";
 interface SortState {

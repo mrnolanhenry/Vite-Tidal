@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getToken, login, logout } from "./auth";
+import { getToken, login, logout } from "./services/auth";
 import Library from "./Library";
 import PlaylistPage from "./PlaylistPage";
 import Search from "./Search";
