@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import Artwork from "./Artwork";
 import MoveTracksPanel from "./MoveTracksPanel";
 import { ApiError } from "./services/api";
@@ -33,7 +34,8 @@ function sameOrder(a: PlaylistTrack[], b: PlaylistTrack[]) {
 function compare(a: PlaylistTrack, b: PlaylistTrack, key: SortKey) {
   switch (key) {
     case "title":
-      return a.title.localeCompare(b.title);
+      // Sort by what the grid shows; the base `title` stays available on each track.
+      return a.fullTitle.localeCompare(b.fullTitle);
     case "artist":
       return a.artist.localeCompare(b.artist);
     case "album":
@@ -121,6 +123,7 @@ export default function PlaylistPage({ id }: { id: string }) {
   const [selected, setSelected] = useState<Set<number>>(new Set()); // by position number
   const [panel, setPanel] = useState<number | null>(null); // session key while open
   const [condensed, setCondensed] = useState(false);
+  const [busy, setBusy] = useState(false); // a move (and its refresh) is in progress
 
   const fullHeaderRef = useRef<HTMLElement>(null);
   const condensedBarRef = useRef<HTMLDivElement>(null);
@@ -174,6 +177,26 @@ export default function PlaylistPage({ id }: { id: string }) {
       window.removeEventListener("resize", onScroll);
     };
   }, []);
+
+  // While a move is running: make the rest of the page inert (no clicks, no keyboard
+  // focus) and ask the browser to confirm before the tab is refreshed or closed.
+  useEffect(() => {
+    if (!busy) return;
+
+    const inertTargets = Array.from(document.querySelectorAll<HTMLElement>(".topbar, main"));
+    inertTargets.forEach((el) => el.setAttribute("inert", ""));
+
+    const warn = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", warn);
+
+    return () => {
+      inertTargets.forEach((el) => el.removeAttribute("inert"));
+      window.removeEventListener("beforeunload", warn);
+    };
+  }, [busy]);
 
   const sorted = useMemo(() => {
     const dir = sort.dir === "asc" ? 1 : -1;
@@ -276,24 +299,28 @@ export default function PlaylistPage({ id }: { id: string }) {
       throw new Error("Those tracks are already at that position.");
     }
 
+    setBusy(true);
     try {
-      await reorderPlaylistTracks(id, moving, rest, insertAt);
-    } catch (err) {
-      if (err instanceof ApiError && err.status === 403) {
-        throw new Error(
-          "TIDAL refused the change (403). Make sure you own this playlist and that you logged out and back in after adding the playlists.write scope.",
-        );
+      try {
+        await reorderPlaylistTracks(id, moving, rest, insertAt);
+      } catch (err) {
+        if (err instanceof ApiError && err.status === 403) {
+          throw new Error(
+            "TIDAL refused the change (403). Make sure you own this playlist and that you logged out and back in after adding the playlists.write scope.",
+          );
+        }
+        throw err;
       }
-      throw err;
-    }
 
-    // Show the result right away, then refresh from TIDAL. The side panel stays on
-    // "Moving…" until the refresh finishes, so you can't start another move on stale data.
-    const reordered = finalOrder.map((t, i) => ({ ...t, position: i + 1 }));
-    setTracks(reordered);
-    setSelected(new Set(moving.map((_, i) => newPosition + i)));
-    setNotice(null);
-    await refreshAfterMove(new Set(moving.map((t) => t.itemId)), reordered);
+      // Show the result right away, then refresh from TIDAL.
+      const reordered = finalOrder.map((t, i) => ({ ...t, position: i + 1 }));
+      setTracks(reordered);
+      setSelected(new Set(moving.map((_, i) => newPosition + i)));
+      setNotice(null);
+      await refreshAfterMove(new Set(moving.map((t) => t.itemId)), reordered);
+    } finally {
+      setBusy(false);
+    }
   }
 
   function header(key: SortKey, label: string) {
@@ -407,7 +434,7 @@ export default function PlaylistPage({ id }: { id: string }) {
                       />
                     </td>
                     <td>
-                      {t.title} {t.explicit && <em>E</em>}
+                      {t.fullTitle} {t.explicit && <em>E</em>}
                     </td>
                     <td>{t.artist}</td>
                     <td>{t.album ?? ""}</td>
@@ -421,15 +448,22 @@ export default function PlaylistPage({ id }: { id: string }) {
         </div>
       )}
 
-      {panel !== null && tracks && selectedTracks.length > 0 && (
-        <MoveTracksPanel
-          key={panel}
-          tracks={tracks}
-          selectedTracks={selectedTracks}
-          onMove={handleMove}
-          onClose={() => setPanel(null)}
-        />
-      )}
+      {/* Both are rendered into <body> so they sit outside the inert page content. */}
+      {busy && createPortal(<div className="busy-overlay" aria-hidden="true" />, document.body)}
+      {panel !== null &&
+        tracks &&
+        selectedTracks.length > 0 &&
+        createPortal(
+          <MoveTracksPanel
+            key={panel}
+            tracks={tracks}
+            selectedTracks={selectedTracks}
+            busy={busy}
+            onMove={handleMove}
+            onClose={() => setPanel(null)}
+          />,
+          document.body,
+        )}
     </>
   );
 }

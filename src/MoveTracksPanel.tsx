@@ -1,4 +1,4 @@
-import { useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import type { PlaylistTrack } from "./services/playlists";
 
 interface Props {
@@ -6,6 +6,8 @@ interface Props {
   tracks: PlaylistTrack[];
   /** Selected tracks, ordered by current position. */
   selectedTracks: PlaylistTrack[];
+  /** True while the move and the refresh from TIDAL are running. */
+  busy: boolean;
   onMove: (newPosition: number) => Promise<void>;
   onClose: () => void;
 }
@@ -14,7 +16,7 @@ interface Props {
 function describe(t: PlaylistTrack): ReactNode {
   return (
     <>
-      <strong className="hl-title">'{t.title}'</strong>
+      <strong className="hl-title">'{t.fullTitle}'</strong>
       {t.artist && (
         <>
           {" "}by <strong className="hl-artist">{t.artist}</strong>
@@ -34,14 +36,47 @@ function describe(t: PlaylistTrack): ReactNode {
   );
 }
 
-export default function MoveTracksPanel({ tracks, selectedTracks, onMove, onClose }: Props) {
+const BUSY_MESSAGES = ["Working on it…", "Still working…", "Nearly there…"];
+const BUSY_INTERVAL_MS = 4000;
+
+/** Rotates through the messages for as long as it is mounted. */
+function BusyMessage() {
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(
+      () => setIndex((i) => (i + 1) % BUSY_MESSAGES.length),
+      BUSY_INTERVAL_MS,
+    );
+    return () => clearInterval(timer);
+  }, []);
+
+  return (
+    <div className="busy-message" role="status" aria-live="polite">
+      <span className="busy-line">
+        <span className="spinner" aria-hidden="true" />
+        <span key={index} className="busy-text">
+          {BUSY_MESSAGES[index]}
+        </span>
+      </span>
+      <small>Please don't refresh, close or leave this page until it finishes.</small>
+    </div>
+  );
+}
+
+export default function MoveTracksPanel({
+  tracks,
+  selectedTracks,
+  busy,
+  onMove,
+  onClose,
+}: Props) {
   const count = selectedTracks.length;
   const noun = count === 1 ? "track" : "tracks";
   const first = selectedTracks[0];
   const maxPosition = Math.max(1, tracks.length - count + 1);
 
   const [value, setValue] = useState(String(first?.position ?? 1));
-  const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const target = Number(value);
@@ -58,29 +93,34 @@ export default function MoveTracksPanel({ tracks, selectedTracks, onMove, onClos
   async function submit(e: FormEvent) {
     e.preventDefault();
     if (!valid || busy) return;
-    setBusy(true);
     setError(null);
     try {
       await onMove(target);
       onClose();
     } catch (err) {
       setError((err as Error).message);
-      setBusy(false);
     }
   }
 
   return (
     <aside
-      className="side-panel"
+      className={`side-panel${busy ? " busy" : ""}`}
       role="dialog"
       aria-label="Move tracks"
+      aria-busy={busy}
       onKeyDown={(e) => {
-        if (e.key === "Escape") onClose();
+        if (e.key === "Escape" && !busy) onClose();
       }}
     >
       <div className="side-panel-head">
         <h3>Move tracks</h3>
-        <button type="button" className="secondary" onClick={onClose} aria-label="Close panel">
+        <button
+          type="button"
+          className="secondary"
+          onClick={onClose}
+          disabled={busy}
+          aria-label="Close panel"
+        >
           ✕
         </button>
       </div>
@@ -90,7 +130,7 @@ export default function MoveTracksPanel({ tracks, selectedTracks, onMove, onClos
           {count} {noun} selected
         </p>
 
-        <label htmlFor="move-position">New position for “{first?.title}”</label>
+        <label htmlFor="move-position">New position for “{first?.fullTitle}”</label>
         <input
           id="move-position"
           type="number"
@@ -99,35 +139,46 @@ export default function MoveTracksPanel({ tracks, selectedTracks, onMove, onClos
           max={maxPosition}
           step={1}
           value={value}
+          disabled={busy}
           onChange={(e) => setValue(e.target.value)}
           onFocus={(e) => e.target.select()}
           autoFocus
         />
 
-        <p className="hint">
-          Currently at position {first?.position}. Valid positions: 1–{maxPosition}.
-          {count > 1 && valid && ` The selected tracks will occupy ${target}–${target + count - 1}.`}
-        </p>
+        {/* Hints describe the playlist as it was before the move, so hide them while busy. */}
+        {!busy && (
+          <>
+            <p className="hint">
+              Currently at position {first?.position}. Valid positions: 1–{maxPosition}.
+              {count > 1 &&
+                valid &&
+                ` The selected tracks will occupy ${target}–${target + count - 1}.`}
+            </p>
 
-        {alreadyThere && (
-          <p className="hint">
-            The selected {noun} {count === 1 ? "is" : "are"} already at this position.
-          </p>
-        )}
-        {valid && !alreadyThere && below && (
-          <p className="hint">
-            This will insert the selected {noun} above {describe(below)}.
-          </p>
-        )}
-        {valid && !alreadyThere && last && (
-          <p className="hint">
-            This will move the selected {noun} to the end of the playlist, after {describe(last)}.
-          </p>
+            {alreadyThere && (
+              <p className="hint">
+                The selected {noun} {count === 1 ? "is" : "are"} already at this position.
+              </p>
+            )}
+            {valid && !alreadyThere && below && (
+              <p className="hint">
+                This will insert the selected {noun} above {describe(below)}.
+              </p>
+            )}
+            {valid && !alreadyThere && last && (
+              <p className="hint">
+                This will move the selected {noun} to the end of the playlist, after{" "}
+                {describe(last)}.
+              </p>
+            )}
+          </>
         )}
 
-        {error && <p className="error">{error}</p>}
+        {error && !busy && <p className="error">{error}</p>}
 
         <button disabled={!valid || busy}>{busy ? "Moving…" : "Move"}</button>
+
+        {busy && <BusyMessage />}
       </form>
     </aside>
   );

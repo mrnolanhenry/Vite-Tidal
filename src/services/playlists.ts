@@ -12,6 +12,7 @@ interface ArtworkFile {
 interface Attributes {
   name?: string;
   title?: string;
+  version?: string | null;
   description?: string;
   duration?: string;
   numberOfItems?: number;
@@ -109,6 +110,12 @@ function coverArtUrl(
 ) {
   const id = toArray(res?.relationships?.coverArt?.data)[0]?.id;
   return id ? pickArtwork(lookup(id)?.attributes?.files, size) : undefined;
+}
+
+/** "Title (Version)" as TIDAL displays it, without repeating a version already in the title. */
+function buildFullTitle(title: string, version?: string) {
+  if (!version || title.toLowerCase().includes(version.toLowerCase())) return title;
+  return `${title} (${version})`;
 }
 
 /** "PT1H2M3S" -> seconds */
@@ -275,7 +282,12 @@ export interface PlaylistTrack {
   type: string;
   /** Identifies this occurrence within the playlist; required for reordering. */
   itemId?: string;
+  /** Base title exactly as TIDAL stores it, e.g. "Get Back". Kept for grouping. */
   title: string;
+  /** Qualifier TIDAL stores separately, e.g. "Rooftop Performance / Take 1". */
+  version?: string;
+  /** Title plus version, e.g. "Get Back (Rooftop Performance / Take 1)". */
+  fullTitle: string;
   artist: string;
   year?: number;
   durationSeconds: number;
@@ -302,6 +314,8 @@ export async function getPlaylistTracks(id: string): Promise<PlaylistTrack[]> {
     const albumRef = toArray(item?.relationships?.albums?.data)[0];
     const album = albumRef ? included.get(keyOf(albumRef)) : undefined;
     const year = Number.parseInt(album?.attributes?.releaseDate?.slice(0, 4) ?? "", 10);
+    const title = item?.attributes?.title ?? "(unavailable)";
+    const version = item?.attributes?.version?.trim() || undefined;
 
     return {
       key: ref.meta?.itemId ?? `${ref.id}-${i}`,
@@ -309,7 +323,9 @@ export async function getPlaylistTracks(id: string): Promise<PlaylistTrack[]> {
       id: ref.id,
       type: ref.type,
       itemId: ref.meta?.itemId,
-      title: item?.attributes?.title ?? "(unavailable)",
+      title,
+      version,
+      fullTitle: buildFullTitle(title, version),
       artist: artists.join(", "),
       year: Number.isNaN(year) ? undefined : year,
       durationSeconds: parseDuration(item?.attributes?.duration),
