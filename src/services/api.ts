@@ -27,14 +27,23 @@ export class ApiError extends Error {
   }
 }
 
-async function fetchWithRetry<T>(url: string): Promise<T> {
+async function fetchWithRetry<T>(
+  url: string,
+  init: { method?: string; body?: unknown } = {},
+): Promise<T> {
   for (let attempt = 0; ; attempt++) {
     await throttle();
+
+    const headers: Record<string, string> = {
+      Authorization: `Bearer ${getToken()}`,
+      accept: "application/vnd.api+json",
+    };
+    if (init.body !== undefined) headers["Content-Type"] = "application/vnd.api+json";
+
     const res = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${getToken()}`,
-        accept: "application/vnd.api+json",
-      },
+      method: init.method ?? "GET",
+      headers,
+      body: init.body !== undefined ? JSON.stringify(init.body) : undefined,
     });
 
     if (res.status === 429 && attempt < MAX_RETRIES) {
@@ -54,7 +63,10 @@ async function fetchWithRetry<T>(url: string): Promise<T> {
         `${res.status} ${res.statusText}${body ? `: ${body}` : hint}`,
       );
     }
-    return (await res.json()) as T;
+
+    // Writes may answer 204 No Content.
+    const text = await res.text();
+    return (text ? JSON.parse(text) : undefined) as T;
   }
 }
 
@@ -72,6 +84,25 @@ export function request<T>(path: string, params: Record<string, string> = {}): P
   cache.set(key, { expires: Date.now() + CACHE_MS, promise });
   promise.catch(() => cache.delete(key)); // never cache failures
   return promise;
+}
+
+/** Throttled, retried write (POST / PATCH / DELETE) with a JSON:API body. */
+export async function send(
+  method: "POST" | "PATCH" | "DELETE",
+  path: string,
+  body: unknown,
+  params: Record<string, string> = {},
+): Promise<void> {
+  const url = new URL(BASE + path);
+  Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
+  await fetchWithRetry<unknown>(url.toString(), { method, body });
+}
+
+/** Drops cached GET responses whose URL contains `match`. */
+export function clearCache(match: string) {
+  for (const key of cache.keys()) {
+    if (key.includes(match)) cache.delete(key);
+  }
 }
 
 /* ---------- search ---------- */

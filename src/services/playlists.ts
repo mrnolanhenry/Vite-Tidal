@@ -1,4 +1,4 @@
-import { ApiError, request } from "./api";
+import { ApiError, clearCache, request, send } from "./api";
 
 const COUNTRY = "US";
 
@@ -271,11 +271,16 @@ export interface PlaylistTrack {
   key: string;
   position: number;
   id: string;
+  /** TIDAL resource type, e.g. "tracks" or "videos". */
+  type: string;
+  /** Identifies this occurrence within the playlist; required for reordering. */
+  itemId?: string;
   title: string;
   artist: string;
   year?: number;
   durationSeconds: number;
   albumId?: string;
+  album?: string;
   artwork?: string;
   explicit?: boolean;
 }
@@ -299,16 +304,87 @@ export async function getPlaylistTracks(id: string): Promise<PlaylistTrack[]> {
     const year = Number.parseInt(album?.attributes?.releaseDate?.slice(0, 4) ?? "", 10);
 
     return {
-      key: `${ref.meta?.itemId ?? ref.id}-${i}`,
+      key: ref.meta?.itemId ?? `${ref.id}-${i}`,
       position: i + 1,
       id: ref.id,
+      type: ref.type,
+      itemId: ref.meta?.itemId,
       title: item?.attributes?.title ?? "(unavailable)",
       artist: artists.join(", "),
       year: Number.isNaN(year) ? undefined : year,
       durationSeconds: parseDuration(item?.attributes?.duration),
       albumId: albumRef?.id,
+      album: album?.attributes?.title,
       artwork: coverArtUrl(album, (artId) => included.get(`artworks:${artId}`), 80),
       explicit: item?.attributes?.explicit,
     };
   });
+}
+
+/* ---------- reordering ---------- */
+
+/** Kept small; I couldn't confirm TIDAL's per-request item limit. */
+const MOVE_BATCH = 20;
+
+/**
+ * Rearranges the playlist so `moving` (in order) sits contiguously at `insertAt`
+ * within the tracks that were not moved (`rest`).
+ *
+ * TIDAL moves items "before" an anchor item, so:
+ * - normally: move the selected tracks before the track that should follow them;
+ * - if they belong at the very end: move every other track that currently sits
+ *   after the first selected track in front of it instead.
+ * Large moves are split into batches that all target the same anchor, which
+ * keeps their order intact.
+ */
+export async function reorderPlaylistTracks(
+  playlistId: string,
+  moving: PlaylistTrack[],
+  rest: PlaylistTrack[],
+  insertAt: number,
+): Promise<void> {
+  if (moving.length === 0) return;
+
+  const tail = rest.slice(insertAt);
+  const items =
+    tail.length > 0 ? moving : rest.filter((t) => t.position > moving[0].position);
+  const before = tail.length > 0 ? tail[0] : moving[0];
+  if (items.length === 0) return;
+
+  if (!before.itemId || items.some((t) => !t.itemId)) {
+    throw new Error("TIDAL didn't provide item IDs for this playlist, so it can't be reordered.");
+  }
+
+  const path = `/playlists/${encodeURIComponent(playlistId)}/relationships/items`;
+  const totalBatches = Math.ceil(items.length / MOVE_BATCH);
+  let done = 0;
+
+  try {
+    for (let i = 0; i < items.length; i += MOVE_BATCH) {
+      await send("PATCH", path, {
+        data: items.slice(i, i + MOVE_BATCH).map((t) => ({
+          id: t.id,
+          type: t.type,
+          meta: { itemId: t.itemId },
+        })),
+        meta: { positionBefore: before.itemId },
+      });
+      done++;
+    }
+  } catch (err) {
+    if (done > 0) {
+      throw new Error(
+        `The move was only partly applied (${done} of ${totalBatches} batches). Reload the playlist to see its current order. Cause: ${(err as Error).message}`,
+      );
+    }
+    throw err;
+  } finally {
+    clearCache(`/playlists/${playlistId}`);
+  }
+}
+
+/** Fetches the playlist's tracks from TIDAL, bypassing the request cache. */
+export function reloadPlaylistTracks(playlistId: string): Promise<PlaylistTrack[]> {
+  clearCache(`/playlists/${playlistId}`);
+  return getPlaylistTracks(playlistId);
 }

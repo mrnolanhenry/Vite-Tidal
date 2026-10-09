@@ -1,6 +1,5 @@
 :root { font-family: system-ui, sans-serif; color-scheme: dark; }
 body { margin: 0; background: #0b0b0f; color: #eee; }
-#root { max-width: 960px; margin: 0 auto; padding: 2rem 1rem; }
 header { display: flex; justify-content: space-between; align-items: center; }
 form { display: flex; gap: .5rem; margin: 1rem 0; }
 input { flex: 1; padding: .6rem; border-radius: 6px; border: 1px solid #333; background: #16161d; color: inherit; }
@@ -14,7 +13,6 @@ em { font-size: .7em; border: 1px solid #888; padding: 0 .25em; border-radius: 3
 .error { color: #ff6b6b; white-space: pre-wrap; }
 
 a { color: #00d4ff; }
-nav { display: flex; gap: 1rem; margin: 1rem 0; }
 
 /* Library tree */
 .tree, .tree ul { list-style: none; margin: 0; padding: 0; }
@@ -40,3 +38,63 @@ table.tracks { width: 100%; border-collapse: collapse; }
 .tracks th button { background: none; color: #aaa; padding: 0; border-radius: 0; font-weight: 600; }
 .tracks th button:hover { color: #fff; }
 .tracks .num { text-align: right; color: #888; font-variant-numeric: tabular-nums; }
+
+/* Top bar: always visible at the top of every page */
+:root { --topbar-h: 2.5rem; }
+.topbar { position: sticky; top: 0; z-index: 20; box-sizing: border-box; height: var(--topbar-h); justify-content: flex-start; gap: 1rem; padding: 0 1rem; background: #111118; border-bottom: 1px solid #222; }
+.topbar h1 { margin: 0; font-size: 1rem; font-weight: 600; }
+.topbar a { font-size: .85rem; }
+.topbar button { margin-left: auto; padding: .25rem .75rem; font-size: .8rem; }
+
+/* Playlist page extras */
+.track-count { color: #aaa; font-size: .9rem; margin: .5rem 0 0; }
+.notice { background: #2a2411; border: 1px solid #5c4d12; border-radius: 6px; padding: .5rem .75rem; font-size: .9rem; }
+.notice button { padding: .2rem .6rem; font-size: .8rem; margin-left: .5rem; }
+.tracks th { color: #aaa; font-weight: 600; }
+.sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+/* Loading skeleton */
+.skeleton { display: block; border-radius: 4px; background: linear-gradient(90deg, #16161d 25%, #22222c 50%, #16161d 75%); background-size: 200% 100%; animation: shimmer 1.4s linear infinite; }
+@keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) { .skeleton { animation: none; } }
+
+/* Move tracks side panel */
+.side-panel { position: fixed; top: var(--topbar-h); right: 0; bottom: 0; z-index: 19; box-sizing: border-box; width: min(340px, 100vw); padding: 1rem; background: #111118; border-left: 1px solid #222; box-shadow: -8px 0 24px rgba(0, 0, 0, .4); overflow-y: auto; animation: slide-in .18s ease-out; }
+@keyframes slide-in { from { transform: translateX(100%); } to { transform: none; } }
+.side-panel-head { display: flex; justify-content: space-between; align-items: center; }
+.side-panel-head h3 { margin: 0; }
+.side-panel-head button { padding: .2rem .6rem; }
+.side-panel form { flex-direction: column; align-items: stretch; margin: 1rem 0 0; }
+.side-panel label { font-size: .9rem; color: #ccc; }
+.side-panel input { flex: none; }
+.hint { color: #888; font-size: .85rem; margin: 0; } }
+
+/* Page content */
+main { max-width: 960px; margin: 0 auto; padding: 1rem; }
+
+/* Track selection */
+.selection-info { color: #888; font-size: .85rem; margin: 0 0 .5rem; }
+.tracks tbody tr { cursor: default; user-select: none; }
+.tracks tbody tr:hover { background: #16161d; }
+.tracks tbody tr.selected { background: #12343f; }
+.tracks tbody tr.selected:hover { background: #164050; }
+.tracks tbody tr:focus-visible { outline: 2px solid #00d4ff; outline-offset: -2px; }
+
+/* Full playlist header: details on the left, actions on the right */
+:root { --bar-h: 3.5rem; }
+.playlist-text { flex: 1; min-width: 0; }
+.header-actions { display: flex; align-items: center; gap: .75rem; margin-left: auto; flex-shrink: 0; }
+.header-actions .selection-info { margin: 0; white-space: nowrap; }
+
+/* Condensed header: fixed under the top bar, shown once the full one has scrolled away */
+.condensed-bar { position: fixed; top: var(--topbar-h); left: 0; right: 0; z-index: 18; height: var(--bar-h); background: #0b0b0f; border-bottom: 1px solid #222; opacity: 0; visibility: hidden; transform: translateY(-4px); transition: opacity .15s, transform .15s, visibility .15s; }
+.condensed-bar.visible { opacity: 1; visibility: visible; transform: none; }
+.condensed-inner { box-sizing: border-box; max-width: 960px; height: 100%; margin: 0 auto; padding: 0 1rem; display: flex; align-items: center; gap: .75rem; }
+.condensed-title { min-width: 0; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.condensed-inner button { padding: .3rem .75rem; font-size: .85rem; }
+
+/* Emphasis inside the Move Tracks helper text */
+.hint .hl-title { color: #fff; font-weight: 600; }
+.hint .hl-artist { color: #00d4ff; font-weight: 600; }
+.hint .hl-album { color: #ddd; font-style: italic; }
+.hint .hl-year { color: #aaa; font-variant-numeric: tabular-nums; }
