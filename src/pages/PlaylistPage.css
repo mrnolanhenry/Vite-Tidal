@@ -1,0 +1,38 @@
+/* Full header: artwork and details on the left, actions on the right */
+.playlist-header { display: flex; align-items: flex-end; gap: 1.25rem; margin: 1rem 0 1.5rem; }
+.playlist-header h2 { margin: 0 0 .5rem; }
+.playlist-text { flex: 1; min-width: 0; }
+.description { color: #aaa; margin: 0; max-width: 60ch; }
+.track-count { color: #aaa; font-size: .9rem; margin: .5rem 0 0; }
+.header-actions { display: flex; align-items: center; gap: .75rem; margin-left: auto; flex-shrink: 0; }
+.selection-info { color: #888; font-size: .85rem; white-space: nowrap; }
+
+/* Condensed header: fixed under the top bar once the full one has scrolled away */
+.condensed-bar { --bar-h: 3.5rem; position: fixed; top: var(--topbar-h); left: 0; right: 0; z-index: 18; height: var(--bar-h); background: #0b0b0f; border-bottom: 1px solid #222; opacity: 0; visibility: hidden; transform: translateY(-4px); transition: opacity .15s, transform .15s, visibility .15s; }
+.condensed-bar.visible { opacity: 1; visibility: visible; transform: none; }
+.condensed-inner { box-sizing: border-box; max-width: 960px; height: 100%; margin: 0 auto; padding: 0 1rem; display: flex; align-items: center; gap: .75rem; }
+.condensed-title { min-width: 0; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.condensed-inner button { padding: .3rem .75rem; font-size: .85rem; }
+
+.notice { background: #2a2411; border: 1px solid #5c4d12; border-radius: 6px; padding: .5rem .75rem; font-size: .9rem; }
+.notice button { padding: .2rem .6rem; font-size: .8rem; margin-left: .5rem; }
+
+/* Track grid */
+.table-wrap { overflow-x: auto; }
+table.tracks { width: 100%; border-collapse: collapse; }
+.tracks th, .tracks td { padding: .4rem .6rem; text-align: left; border-bottom: 1px solid #222; vertical-align: middle; }
+.tracks th { color: #aaa; font-weight: 600; }
+.tracks th button { background: none; color: #aaa; padding: 0; border-radius: 0; font-weight: 600; }
+.tracks th button:hover { color: #fff; }
+.tracks .num { text-align: right; color: #888; font-variant-numeric: tabular-nums; }
+.tracks em { font-size: .7em; border: 1px solid #888; padding: 0 .25em; border-radius: 3px; }
+
+/* Row selection */
+.tracks tbody tr { cursor: default; user-select: none; }
+.tracks tbody tr:hover { background: #16161d; }
+.tracks tbody tr.selected { background: #12343f; }
+.tracks tbody tr.selected:hover { background: #164050; }
+.tracks tbody tr:focus-visible { outline: 2px solid #00d4ff; outline-offset: -2px; }
+
+/* Page lock while a move is running (the move panel sits above this, z-index 40) */
+.busy-overlay { position: fixed; inset: 0; z-index: 30; cursor: wait; background: rgba(0, 0, 0, .45); }

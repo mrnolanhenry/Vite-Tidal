@@ -1,0 +1,6 @@
+.search-form { display: flex; gap: .5rem; margin: 1rem 0; }
+.search-form input { flex: 1; }
+
+.search-results { list-style: none; padding: 0; }
+.search-results li { display: flex; justify-content: space-between; padding: .6rem .2rem; border-bottom: 1px solid #222; }
+.search-results em { font-size: .7em; border: 1px solid #888; padding: 0 .25em; border-radius: 3px; }

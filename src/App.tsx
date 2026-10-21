@@ -1,28 +1,53 @@
-import { getToken, login, logout } from "./auth";
-import Search from "./Search";
+import { useEffect, useState } from "react";
+import "./App.css";
+import Library from "./pages/Library";
+import PlaylistPage from "./pages/PlaylistPage";
+import { getToken, login, logout } from "./services/auth";
+
+function useHash() {
+  const [hash, setHash] = useState(window.location.hash);
+  useEffect(() => {
+    const onChange = () => setHash(window.location.hash);
+    window.addEventListener("hashchange", onChange);
+    return () => window.removeEventListener("hashchange", onChange);
+  }, []);
+  return hash;
+}
 
 export default function App({ initialError }: { initialError?: string }) {
+  const hash = useHash();
   const loggedIn = Boolean(getToken());
 
+  const playlistMatch = hash.match(/^#\/playlist\/(.+)$/);
+  const playlistId = loggedIn && playlistMatch ? decodeURIComponent(playlistMatch[1]) : null;
+
+  let content;
   if (!loggedIn) {
-    return (
-      <>
-        <h1>Vite Tidal</h1>
-        {initialError && <p className="error">{initialError}</p>}
-        <button onClick={login}>Log in with TIDAL</button>
-      </>
+    content = initialError ? (
+      <p className="error">{initialError}</p>
+    ) : (
+      <p>Log in with TIDAL to view your playlists.</p>
     );
+  } else if (playlistId) {
+    content = <PlaylistPage key={playlistId} id={playlistId} />;
+  } else {
+    content = <Library />;
   }
 
   return (
     <>
-      <header>
-        <h1>Vite Tidal</h1>
-        <button className="secondary" onClick={logout}>
-          Log out
-        </button>
+      <header className="topbar">
+        <h1>Tidal Tools</h1>
+        {playlistId && <a href="#/">← Back to Playlists</a>}
+        {loggedIn ? (
+          <button className="secondary" onClick={logout}>
+            Log out
+          </button>
+        ) : (
+          <button onClick={login}>Log in</button>
+        )}
       </header>
-      <Search />
+      <main>{content}</main>
     </>
   );
 }

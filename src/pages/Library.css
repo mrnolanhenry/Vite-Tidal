@@ -1,0 +1,6 @@
+.library-header { display: flex; justify-content: space-between; align-items: center; }
+
+.tree { list-style: none; margin: 0; padding: 0; }
+.row { display: flex; align-items: center; gap: .75rem; width: 100%; box-sizing: border-box; padding: .4rem .5rem; border-radius: 6px; color: inherit; text-decoration: none; }
+.row:hover { background: #16161d; }
+.row-title { flex: 1; }

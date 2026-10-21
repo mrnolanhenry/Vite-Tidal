@@ -2,7 +2,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./style.css";
 import App from "./App";
-import { handleRedirect } from "./auth";
+import { handleRedirect } from "./services/auth";
 
 // The OAuth code exchange must run exactly once. Doing it here, before React
 // mounts, avoids StrictMode's double-invoked effects burning the single-use code.
