@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
-import { formatDuration, searchTracks, type Track } from "./services/api";
+import "./Search.css";
+import { formatDuration, searchTracks, type Track } from "../services/api";
 
 export default function Search() {
   const [query, setQuery] = useState("");
@@ -28,7 +29,7 @@ export default function Search() {
 
   return (
     <>
-      <form onSubmit={onSubmit}>
+      <form className="search-form" onSubmit={onSubmit}>
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -42,7 +43,7 @@ export default function Search() {
       {error && <p className="error">{error}</p>}
       {searched && !loading && !error && tracks.length === 0 && <p>No results.</p>}
 
-      <ul>
+      <ul className="search-results">
         {tracks.map((t) => (
           <li key={t.id}>
             <span>

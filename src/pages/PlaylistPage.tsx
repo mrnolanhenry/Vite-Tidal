@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import Artwork from "./Artwork";
-import MoveTracksPanel from "./MoveTracksPanel";
-import { ApiError } from "./services/api";
+import "./PlaylistPage.css";
+import Artwork from "../components/Artwork";
+import MoveTracksPanel from "../components/MoveTracksPanel";
+import { ApiError } from "../services/api";
 import {
   fetchCoverArt,
   formatSeconds,
@@ -12,7 +13,7 @@ import {
   reorderPlaylistTracks,
   type PlaylistDetail,
   type PlaylistTrack,
-} from "./services/playlists";
+} from "../services/playlists";
 
 type SortKey = "position" | "title" | "artist" | "album" | "year" | "duration";
 interface SortState {

@@ -1,3 +1,5 @@
+import "./Artwork.css";
+
 interface Props {
   src?: string;
   size?: number;

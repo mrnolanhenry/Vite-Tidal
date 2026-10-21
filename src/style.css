@@ -1,114 +1,21 @@
-:root { font-family: system-ui, sans-serif; color-scheme: dark; }
+/* Global base: design tokens, element defaults and small shared utilities.
+   Component and page styles live next to their components.
+   Keep this imported first (main.tsx) so component CSS can override it. */
+
+:root { font-family: system-ui, sans-serif; color-scheme: dark; --topbar-h: 2.5rem; }
 body { margin: 0; background: #0b0b0f; color: #eee; }
-header { display: flex; justify-content: space-between; align-items: center; }
-form { display: flex; gap: .5rem; margin: 1rem 0; }
-input { flex: 1; padding: .6rem; border-radius: 6px; border: 1px solid #333; background: #16161d; color: inherit; }
+a { color: #00d4ff; }
+small { color: #888; }
+
+/* Form controls */
+input { padding: .6rem; border-radius: 6px; border: 1px solid #333; background: #16161d; color: inherit; }
 button { padding: .6rem 1rem; border: 0; border-radius: 6px; background: #00d4ff; color: #000; font-weight: 600; cursor: pointer; }
 button:disabled { opacity: .6; cursor: default; }
 button.secondary { background: #2a2a35; color: #eee; }
-ul { list-style: none; padding: 0; }
-li { display: flex; justify-content: space-between; padding: .6rem .2rem; border-bottom: 1px solid #222; }
-small { color: #888; }
-em { font-size: .7em; border: 1px solid #888; padding: 0 .25em; border-radius: 3px; }
+
+/* Utilities */
 .error { color: #ff6b6b; white-space: pre-wrap; }
-
-a { color: #00d4ff; }
-
-/* Library tree */
-.tree, .tree ul { list-style: none; margin: 0; padding: 0; }
-.tree li { display: block; padding: 0; border-bottom: 0; }
-.nested { margin-left: 1.5rem; padding-left: .5rem; border-left: 1px solid #222; }
-.row { display: flex; align-items: center; gap: .75rem; width: 100%; box-sizing: border-box; padding: .4rem .5rem; border-radius: 6px; color: inherit; text-decoration: none; }
-button.row { background: transparent; font: inherit; font-weight: 500; text-align: left; }
-.row:hover { background: #16161d; }
-.row-title { flex: 1; }
-.empty { color: #888; margin: .25rem 0 .5rem 3.5rem; }
-
-/* Artwork */
-.art { border-radius: 4px; object-fit: cover; flex-shrink: 0; background: #16161d; }
-.art-empty { display: flex; align-items: center; justify-content: center; color: #666; }
-
-/* Playlist page */
-.playlist-header { display: flex; gap: 1.25rem; align-items: flex-end; margin: 1rem 0 1.5rem; }
-.playlist-header h2 { margin: 0 0 .5rem; }
-.description { color: #aaa; margin: 0; max-width: 60ch; }
-.table-wrap { overflow-x: auto; }
-table.tracks { width: 100%; border-collapse: collapse; }
-.tracks th, .tracks td { padding: .4rem .6rem; text-align: left; border-bottom: 1px solid #222; vertical-align: middle; }
-.tracks th button { background: none; color: #aaa; padding: 0; border-radius: 0; font-weight: 600; }
-.tracks th button:hover { color: #fff; }
-.tracks .num { text-align: right; color: #888; font-variant-numeric: tabular-nums; }
-
-/* Top bar: always visible at the top of every page */
-:root { --topbar-h: 2.5rem; }
-.topbar { position: sticky; top: 0; z-index: 20; box-sizing: border-box; height: var(--topbar-h); justify-content: flex-start; gap: 1rem; padding: 0 1rem; background: #111118; border-bottom: 1px solid #222; }
-.topbar h1 { margin: 0; font-size: 1rem; font-weight: 600; }
-.topbar a { font-size: .85rem; }
-.topbar button { margin-left: auto; padding: .25rem .75rem; font-size: .8rem; }
-
-/* Playlist page extras */
-.track-count { color: #aaa; font-size: .9rem; margin: .5rem 0 0; }
-.notice { background: #2a2411; border: 1px solid #5c4d12; border-radius: 6px; padding: .5rem .75rem; font-size: .9rem; }
-.notice button { padding: .2rem .6rem; font-size: .8rem; margin-left: .5rem; }
-.tracks th { color: #aaa; font-weight: 600; }
 .sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
-
-/* Loading skeleton */
 .skeleton { display: block; border-radius: 4px; background: linear-gradient(90deg, #16161d 25%, #22222c 50%, #16161d 75%); background-size: 200% 100%; animation: shimmer 1.4s linear infinite; }
 @keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
 @media (prefers-reduced-motion: reduce) { .skeleton { animation: none; } }
-
-/* Move tracks side panel */
-.side-panel { position: fixed; top: var(--topbar-h); right: 0; bottom: 0; z-index: 40; box-sizing: border-box; width: min(340px, 100vw); padding: 1rem; background: #111118; border-left: 1px solid #222; box-shadow: -8px 0 24px rgba(0, 0, 0, .4); overflow-y: auto; animation: slide-in .18s ease-out; }
-@keyframes slide-in { from { transform: translateX(100%); } to { transform: none; } }
-.side-panel-head { display: flex; justify-content: space-between; align-items: center; }
-.side-panel-head h3 { margin: 0; }
-.side-panel-head button { padding: .2rem .6rem; }
-.side-panel form { flex-direction: column; align-items: stretch; margin: 1rem 0 0; }
-.side-panel label { font-size: .9rem; color: #ccc; }
-.side-panel input { flex: none; }
-.hint { color: #888; font-size: .85rem; margin: 0; } }
-
-/* Page content */
-main { max-width: 960px; margin: 0 auto; padding: 1rem; }
-
-/* Track selection */
-.selection-info { color: #888; font-size: .85rem; margin: 0 0 .5rem; }
-.tracks tbody tr { cursor: default; user-select: none; }
-.tracks tbody tr:hover { background: #16161d; }
-.tracks tbody tr.selected { background: #12343f; }
-.tracks tbody tr.selected:hover { background: #164050; }
-.tracks tbody tr:focus-visible { outline: 2px solid #00d4ff; outline-offset: -2px; }
-
-/* Full playlist header: details on the left, actions on the right */
-:root { --bar-h: 3.5rem; }
-.playlist-text { flex: 1; min-width: 0; }
-.header-actions { display: flex; align-items: center; gap: .75rem; margin-left: auto; flex-shrink: 0; }
-.header-actions .selection-info { margin: 0; white-space: nowrap; }
-
-/* Condensed header: fixed under the top bar, shown once the full one has scrolled away */
-.condensed-bar { position: fixed; top: var(--topbar-h); left: 0; right: 0; z-index: 18; height: var(--bar-h); background: #0b0b0f; border-bottom: 1px solid #222; opacity: 0; visibility: hidden; transform: translateY(-4px); transition: opacity .15s, transform .15s, visibility .15s; }
-.condensed-bar.visible { opacity: 1; visibility: visible; transform: none; }
-.condensed-inner { box-sizing: border-box; max-width: 960px; height: 100%; margin: 0 auto; padding: 0 1rem; display: flex; align-items: center; gap: .75rem; }
-.condensed-title { min-width: 0; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.condensed-inner button { padding: .3rem .75rem; font-size: .85rem; }
-
-/* Emphasis inside the Move Tracks helper text */
-.hint .hl-title { color: #fff; font-weight: 600; }
-.hint .hl-artist { color: #00d4ff; font-weight: 600; }
-.hint .hl-album { color: #ddd; font-style: italic; }
-.hint .hl-year { color: #aaa; font-variant-numeric: tabular-nums; }
-
-/* Page lock while a move is running */
-.busy-overlay { position: fixed; inset: 0; z-index: 30; cursor: wait; background: rgba(0, 0, 0, .45); }
-.side-panel.busy, .side-panel.busy * { cursor: wait !important; }
-
-/* Cycling status message */
-.busy-message { display: flex; flex-direction: column; gap: .35rem; margin-top: .75rem; padding: .85rem; border: 1px solid #00d4ff; border-radius: 8px; background: rgba(0, 212, 255, .1); color: #00d4ff; }
-.busy-line { display: flex; align-items: center; gap: .65rem; font-size: 1.1rem; font-weight: 700; }
-.busy-text { animation: fade-in .4s ease-out; }
-.busy-message small { color: #9fe9ff; font-size: .8rem; font-weight: 400; }
-.spinner { flex-shrink: 0; width: 1.1rem; height: 1.1rem; border: 2px solid rgba(0, 212, 255, .3); border-top-color: #00d4ff; border-radius: 50%; animation: spin .8s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
-@keyframes fade-in { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
-@media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 2.4s; } .busy-text { animation: none; } }

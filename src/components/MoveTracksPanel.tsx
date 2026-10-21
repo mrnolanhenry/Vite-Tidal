@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
-import type { PlaylistTrack } from "./services/playlists";
+import "./MoveTracksPanel.css";
+import type { PlaylistTrack } from "../services/playlists";
 
 interface Props {
   /** Every track in the playlist, in position order. */

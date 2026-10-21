@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import Artwork from "./Artwork";
-import { fetchCoverArt, getLibrary, type PlaylistEntry } from "./services/playlists";
+import "./Library.css";
+import Artwork from "../components/Artwork";
+import { fetchCoverArt, getLibrary, type PlaylistEntry } from "../services/playlists";
 
 export default function Library() {
   const [playlists, setPlaylists] = useState<PlaylistEntry[] | null>(null);
@@ -49,7 +50,7 @@ export default function Library() {
 
   return (
     <>
-      <header>
+      <header className="library-header">
         <h2>Your playlists ({playlists.length})</h2>
         <button type="button" className="secondary" onClick={refresh}>
           Refresh

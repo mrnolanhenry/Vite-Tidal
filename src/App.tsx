@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import Library from "./Library";
-import PlaylistPage from "./PlaylistPage";
+import "./App.css";
+import Library from "./pages/Library";
+import PlaylistPage from "./pages/PlaylistPage";
 import { getToken, login, logout } from "./services/auth";
 
 function useHash() {
