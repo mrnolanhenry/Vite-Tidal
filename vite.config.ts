@@ -23,6 +23,7 @@ import react from '@vitejs/plugin-react'; // or your respective framework plugin
 
 export default defineConfig({
   plugins: [react()],
+  base: '/Vite-Tidal/',
   server: {
     proxy: {
       '/api/tidal': {
