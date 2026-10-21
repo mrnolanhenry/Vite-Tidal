@@ -26,7 +26,7 @@ export default function App({ initialError }: { initialError?: string }) {
     content = initialError ? (
       <p className="error">{initialError}</p>
     ) : (
-      <p>Log in with TIDAL to view your playlists.</p>
+      <p>Log in to TIDAL to view your playlists.</p>
     );
   } else if (playlistId) {
     content = <PlaylistPage key={playlistId} id={playlistId} />;
